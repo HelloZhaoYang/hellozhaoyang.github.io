@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>Redis集群创建 | ZhaoYang&#39;s Blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+    <meta name="keywords" content="ZhaoYang's Blog">
+  
+  <meta name="description" content="由于参与项目的部分功能需要，尝试在内网环境搭建了一Redis集群。安装环境为利用3台CentOS7.5服务器，服务器间可以相互通信。本文利用这3台服务器建设了一6节点的Redis集群，现将创建过程做一简要记录。">
+<meta name="keywords" content="NoSQL,Redis">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis集群创建">
+<meta property="og:url" content="http://hellozhaoyang.github.io/2019/07/02/T20190702/index.html">
+<meta property="og:site_name" content="ZhaoYang&#39;s Blog">
+<meta property="og:description" content="由于参与项目的部分功能需要，尝试在内网环境搭建了一Redis集群。安装环境为利用3台CentOS7.5服务器，服务器间可以相互通信。本文利用这3台服务器建设了一6节点的Redis集群，现将创建过程做一简要记录。">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="http://hellozhaoyang.github.io/2019/07/02/T20190702/ruby01.JPG">
+<meta property="og:image" content="http://hellozhaoyang.github.io/2019/07/02/T20190702/rubygems01.JPG">
+<meta property="og:image" content="http://hellozhaoyang.github.io/2019/07/02/T20190702/redis01.JPG">
+<meta property="og:image" content="http://hellozhaoyang.github.io/2019/07/02/T20190702/redis02.JPG">
+<meta property="og:image" content="http://hellozhaoyang.github.io/2019/07/02/T20190702/redis03.JPG">
+<meta property="og:updated_time" content="2019-07-05T09:25:35.667Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Redis集群创建">
+<meta name="twitter:description" content="由于参与项目的部分功能需要，尝试在内网环境搭建了一Redis集群。安装环境为利用3台CentOS7.5服务器，服务器间可以相互通信。本文利用这3台服务器建设了一6节点的Redis集群，现将创建过程做一简要记录。">
+<meta name="twitter:image" content="http://hellozhaoyang.github.io/2019/07/02/T20190702/ruby01.JPG">
+  
+  
+    <link rel="icon" href="/favicon.ico">
+  
+  <link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/pace.min.js"></script>
+  
+
+  
+  
+
+</head>
+</html>
+<body>
+  <div id="container">
+      <header id="header">
+    <div id="banner"></div>
+    <div id="header-outer">
+        <div id="header-menu" class="header-menu-pos animated">
+            <div class="header-menu-container">
+                <a href="/" class="left">
+                    <span class="site-title">ZhaoYang&#39;s Blog</span>
+                </a>
+                <nav id="header-menu-nav" class="right">
+                    
+                    <a  href="/">
+                        <i class="fa fa-home"></i>
+                        <span>Home</span>
+                    </a>
+                    
+                    <a  href="/archives">
+                        <i class="fa fa-archive"></i>
+                        <span>Archives</span>
+                    </a>
+                    
+                    <a  href="/about">
+                        <i class="fa fa-user"></i>
+                        <span>About</span>
+                    </a>
+                    
+                </nav>
+                <a class="mobile-header-menu-button">
+                    <i class="fa fa-bars"></i>
+                </a>
+            </div>
+        </div>
+        <div id="header-row">
+            <div id="logo">
+                <a href="/">
+                    <img src="/images/logo.png" alt="logo">
+                </a>
+            </div>
+            <div class="header-info">
+                <div id="header-title">
+                    
+                    <h2>
+                        ZhaoYang&#39;s Blog
+                    </h2>
+                    
+                </div>
+                <div id="header-description">
+                    
+                    <h3>
+                        做了过河卒子，只能拼命向前
+                    </h3>
+                    
+                </div>
+            </div>
+            <nav class="header-nav">
+                <div class="social">
+                    
+                        <a title="ZhaoYang" target="_blank" href="//hellozhaoyang.github.io">
+                            <i class="fa fa-home fa-2x"></i></a>
+                    
+                        <a title="Github" target="_blank" href="//github.com/HelloZhaoYang">
+                            <i class="fa fa-github fa-2x"></i></a>
+                    
+                        <a title="Weibo" target="_blank" href="//weibo.com/u/3235412860">
+                            <i class="fa fa-weibo fa-2x"></i></a>
+                    
+                </div>
+            </nav>
+        </div>
+    </div>
+</header>
+      <div class="outer">
+        <section id="main" class="body-wrap"><article id="post-T20190702" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="post-title" itemprop="name">
+      Redis集群创建
+    </h1>
+    <div class="post-title-bar">
+      <ul>
+          
+              <li>
+                  <i class="fa fa-book"></i>
+                  
+                      <a href="/categories/计算机/">计算机</a>
+                  
+              </li>
+          
+        <li>
+          <i class="fa fa-calendar"></i>  2019-07-02
+        </li>
+        <li>
+          <i class="fa fa-eye"></i>
+          <span id="busuanzi_value_page_pv"></span>
+        </li>
+      </ul>
+    </div>
+  
+
+          
+      </header>
+    
+    <div class="article-entry post-content" itemprop="articleBody">
+      
+            
+            <p>由于参与项目的部分功能需要，尝试在内网环境搭建了一Redis集群。安装环境为利用3台CentOS7.5服务器，服务器间可以相互通信。本文利用这3台服务器建设了一6节点的Redis集群，现将创建过程做一简要记录。</p>
+<a id="more"></a>
+<h1 id="1-环境准备"><a href="#1-环境准备" class="headerlink" title="1.环境准备"></a>1.环境准备</h1><h2 id="1-1-软件环境及版本"><a href="#1-1-软件环境及版本" class="headerlink" title="1.1 软件环境及版本"></a>1.1 软件环境及版本</h2><table>
+<thead>
+<tr>
+<th align="center">软件名称</th>
+<th align="center">版本</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><a href="https://mirrors.tuna.tsinghua.edu.cn/centos-vault/7.5.1804/isos/x86_64/CentOS-7-x86_64-Everything-1804.iso" target="_blank" rel="noopener">CentOS(操作系统)</a></td>
+<td align="center">7.5.1804</td>
+</tr>
+<tr>
+<td align="center"><a href="http://download.redis.io/releases/redis-5.0.0.tar.gz" target="_blank" rel="noopener">Redis</a></td>
+<td align="center">5.0.0</td>
+</tr>
+<tr>
+<td align="center"><a href="https://cache.ruby-lang.org/pub/ruby/2.5/ruby-2.5.3.tar.gz" target="_blank" rel="noopener">Ruby</a></td>
+<td align="center">2.5.3</td>
+</tr>
+<tr>
+<td align="center"><a href="https://rubygems.org/rubygems/rubygems-2.7.8.tgz" target="_blank" rel="noopener">Rubygems</a></td>
+<td align="center">2.7.8</td>
+</tr>
+<tr>
+<td align="center"><a href="https://rubygems.org/downloads/redis-4.0.3.gem" target="_blank" rel="noopener">Redis.gem</a></td>
+<td align="center">4.0.3</td>
+</tr>
+</tbody></table>
+<h2 id="1-2演示服务器IP地址"><a href="#1-2演示服务器IP地址" class="headerlink" title="1.2演示服务器IP地址"></a>1.2演示服务器IP地址</h2><table>
+<thead>
+<tr>
+<th align="center">IP地址</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">172.16.100.249</td>
+</tr>
+<tr>
+<td align="center">172.16.100.250</td>
+</tr>
+<tr>
+<td align="center">172.16.100.251</td>
+</tr>
+</tbody></table>
+<h2 id="1-2-防火墙设置"><a href="#1-2-防火墙设置" class="headerlink" title="1.2 防火墙设置"></a>1.2 防火墙设置</h2><p>若部署环境允许操作系统关闭防火墙，只需在操作系统层面对每台服务器。关闭防火墙即可。shell命令为</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">systemctl stop firewalld.service</span><br></pre></td></tr></table></figure>
+
+<p>之后可利用shell命令检查防火墙状态</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">systemctl status firewalld.service</span><br></pre></td></tr></table></figure>
+
+<p>关闭防火墙后，执行命令</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">systemctl disable firewalld.service</span><br></pre></td></tr></table></figure>
+
+<p>关闭防火墙开机自起。</p>
+<p>但是，生产环境大多不允许操作系统裸奔，需要运维人员开启操作系统防火墙。因此，我们部署Redis集群时，还需要手动开放一些端口。</p>
+<p>首先我们需要确定Redis各节点部署在哪些端口上。这里我们选择三台服务器的6379及6380端口作为我们的部署端口。<br>此外，Redis还需要部署端口数值加10000作为通信及集群管理使用。对本例而言即还需开放三台服务器的16379及16380端口。<br>综上，添加防火墙端口的shell命令为：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">firewall-cmd --zone=public --add-port=6379/tcp –permanent</span><br><span class="line">firewall-cmd --zone=public --add-port=16379/tcp --permanent</span><br><span class="line">firewall-cmd --zone=public --add-port=6380/tcp --permanent</span><br><span class="line">firewall-cmd --zone=public --add-port=16380/tcp --permanent</span><br></pre></td></tr></table></figure>
+
+<p>最后我们重新加载一下防火墙：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">firewall-cmd --reload</span><br></pre></td></tr></table></figure>
+
+<h2 id="1-3-yum本地源配置"><a href="#1-3-yum本地源配置" class="headerlink" title="1.3 yum本地源配置"></a>1.3 yum本地源配置</h2><p>若部署环境可连接互联网或有局域网内有yum镜像源，按所选的源镜像配置即可；<br>这里我们在本地局域网进行部署，不能连接互联网，局域网内也没有可用的yum源镜像，因此需要使用操作系统的安装盘或镜像文件配置本地yum源。<br>利用scp等工具，先将CentOS7的安装盘的镜像文件上传到服务器上，并在<code>/mnt</code>目录下创建<code>CentOS</code>文件夹作为镜像盘的挂载位置。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkdir /mnt/CentOS</span><br></pre></td></tr></table></figure>
+
+<p>之后挂载镜像光盘</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mount -t iso9660 -o loop CentOS-7-x86_64-DVD-1804.iso /mnt/CentOS/</span><br></pre></td></tr></table></figure>
+
+<p>ISO镜像挂载好后，我们开始配置yum本地源。<br>先备份原yum源配置</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd /etc/yum.repo.d</span><br><span class="line">mv CentOS-Base.repo CentOS-Base.repo.bak</span><br></pre></td></tr></table></figure>
+
+<p>之后创建本地源的配置文件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vi CentOS-LocalSource.repo</span><br></pre></td></tr></table></figure>
+
+<p>键盘输入<code>i</code>开始编辑，配置内容如下所示：</p>
+<blockquote>
+<p>[CentOS-LocalSource]<br>name=CentOS<br>baseurl=file:///mnt/CentOS<br>enable=1<br>gpgcheck=0</p>
+</blockquote>
+<p>编辑好后，按<code>ESC</code>键退出插入模式后输入<code>:wq</code>保存退出。<br>清除yum的本地缓存，并建立新缓存</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">yum clean all</span><br><span class="line">yum makecache</span><br></pre></td></tr></table></figure>
+
+<p>利用yum安装gcc及make等创建Redis需要依赖测试本地yum源是否配置成功</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">yum install gcc</span><br><span class="line">yum install make</span><br><span class="line">yum install zlib</span><br><span class="line">yum install openssl</span><br></pre></td></tr></table></figure>
+
+<h1 id="2-安装单机Redis"><a href="#2-安装单机Redis" class="headerlink" title="2.安装单机Redis"></a>2.安装单机Redis</h1><p>利用scp等工具，先将redis的安装文件上传到服务器上。<br>创建Redis的安装目录</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkdir /usr/local/redis</span><br></pre></td></tr></table></figure>
+
+<p>将Redis的安装文件解压到安装目录</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tar -zxvf redis-5.0.0.tar.gz -C /usr/local/redis</span><br></pre></td></tr></table></figure>
+
+<p>进入到Redis安装文件的解压目录</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd /usr/local/redis/redis-5.0.0/</span><br></pre></td></tr></table></figure>
+
+<p>利用make进行安装</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make PREFIX=/usr/local/redis install</span><br></pre></td></tr></table></figure>
+
+<h1 id="3-ruby及rubygems"><a href="#3-ruby及rubygems" class="headerlink" title="3.ruby及rubygems"></a>3.ruby及rubygems</h1><h2 id="3-1安装ruby"><a href="#3-1安装ruby" class="headerlink" title="3.1安装ruby"></a>3.1安装ruby</h2><p>先将ruby、rubygems、redis.gem等文件上传到服务器上.<br>创建ruby及ruby的安装目录，并将安装包解压到安装目录中</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mkdir /usr/local/ruby</span><br><span class="line">tar -zxvf ruby-2.5.3.tar.gz -C /usr/local/ruby/</span><br><span class="line">mkdir /usr/local/rubygems</span><br><span class="line">tar -zxvf rubygems-2.7.8.tgz -C /usr/local/rubygems/</span><br></pre></td></tr></table></figure>
+
+<p>先make安装ruby</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cd /usr/local/ruby/ruby-2.5.3</span><br><span class="line">./configure --prefix=/usr/local/ruby</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+
+<p>安装完后测试ruby是否添加到环境变量中</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ruby -v</span><br></pre></td></tr></table></figure>
+
+<p>若返回结果如下，说明ruby为注册到环境变量中，需要手动添加<br>利用vi编辑器打开<code>/etc/profile</code>文件，键盘按<code>i</code>开始编辑，按<code>shift+g</code>调到文件末尾，新起一行，将ruby所在文件夹地址添加到PATH环境变量中</p>
+<blockquote>
+<p>export PATH=$PATH:/usr/local/ruby/bin</p>
+</blockquote>
+<p>键盘按<code>ESC</code>推出编辑模式后输入<code>:wq</code>保存退出。<br>在shell命令行中,输入</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source /etc/profile</span><br></pre></td></tr></table></figure>
+
+<p>使环境变量立即生效。<br>此时输入<code>ruby -v</code>发现ruby已经注册到系统的环境变量中。</p>
+<img src="/2019/07/02/T20190702/ruby01.JPG" title="ruby安装成功">
+<h2 id="3-2安装rubygems及redis-gem"><a href="#3-2安装rubygems及redis-gem" class="headerlink" title="3.2安装rubygems及redis.gem"></a>3.2安装rubygems及redis.gem</h2><p>进入到rubygems安装包解压目录，安装rubygems</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd /usr/local/rubygems/rubygems-2.7.8</span><br><span class="line">ruby setup.rb</span><br></pre></td></tr></table></figure>
+
+<p>安装完成后，在shell命令行中输入</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gem -v</span><br></pre></td></tr></table></figure>
+
+<p>查看rubygems是否安装成功<br>若返回结果为</p>
+<img src="/2019/07/02/T20190702/rubygems01.JPG" title="rubygems安装成功">
+<p>则说明rubygems已经安装成功。<br>下面安装redis.gem<br>利用<code>cd</code>命令进入到<code>redis-4.0.3.gem</code>所在文件夹<br>在shell命令行中输入</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gem install redis-4.0.3.gem</span><br></pre></td></tr></table></figure>
+
+<p>即可完成redis-4.0.3.gem的安装。</p>
+<h1 id="4-创建Redis集群"><a href="#4-创建Redis集群" class="headerlink" title="4.创建Redis集群"></a>4.创建Redis集群</h1><p>先在每台服务器上创建Redis的配置文件目录，并将Redis自带的配置文件拷贝到配置文件目录中</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cd /usr/local/redis</span><br><span class="line">mkdir conf</span><br><span class="line">cp redis-5.0.0/redis.conf conf/</span><br></pre></td></tr></table></figure>
+
+<p>利用端口号命名Redis的配置文件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mv conf/redis.conf conf/redis-6379.conf</span><br></pre></td></tr></table></figure>
+
+<p>修改相应配置以进行集群搭建,我们先对6379端口的配置进行修改。由于6379是Redis的默认端口，因此关于端口方面的配置不需要修改。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vi conf/redis.conf</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>daemonized yes<br>pidfile /var/run/redis_6379.pid<br>logfile “node-6379.log”<br>cluster-enabled yes<br>cluster-node-timeout 15000<br>cluster-config-file nodes-6379.conf<br>bind 1172.16.100.249 127.0.0.1</p>
+</blockquote>
+<p>更改完后按<code>wq</code>保存<br>将6379端口配置文件复制一份，作为6380端口的配置文件，并进行编辑。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cp conf/redis-6379.conf conf/redis-6380.conf</span><br><span class="line">vi conf/redis-6380.conf</span><br></pre></td></tr></table></figure>
+
+<p>这里我们利用vi编辑器命令<code>:%s/6379/6380/g</code>将文件中所有出现6379的地方替换为6380后，输入<code>wq</code>保存退出。<br>配置文件更改好后，启动redis节点</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">./bin/redis-server ./conf/redis-6379.conf</span><br><span class="line">./bin/redis-server ./conf/redis-6380.conf</span><br></pre></td></tr></table></figure>
+
+<p>之后我们在shell命令行中查看后台进程是运行</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ps -aux |grep redis</span><br></pre></td></tr></table></figure>
+
+<p>若返回结果如下，说明redis后台进程已正常运行。<br>同理，我们对另外两台服务器也进行相应配置，但注意配置文件中bind要替换为对应的服务器IP，配置文件更改好后，同理仿照上步启动节点。<br>当三台服务器6个节点均启动后，我们开始创建Redis集群。<br>选择其中一台服务器(以下测试步骤选择任意一台服务器操作即可),执行</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./bin/redis-cli --cluster create 172.16.100.251:6380 172.16.100.250:6379 172.16.100.250:6380 172.16.100.249:6379 172.16.100.249:6380 172.16.100.251:6379  --cluster-replicas 1</span><br></pre></td></tr></table></figure>
+
+<p>弹出下面对话后输入<code>yes</code>继续</p>
+<img src="/2019/07/02/T20190702/redis01.JPG" title="Redis集群">
+<p>再等一会，发现Redis集群已经创建成功。</p>
+<img src="/2019/07/02/T20190702/redis02.JPG" title="Redis集群">
+<p>利用<a href="show_redis_map.sh">show_redis_map</a>工具可以查看Redis各节点的情况。将<a href="show_redis_map.sh">show_redis_map</a>的shell脚本上传到服务器后，运行</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">chmod a+x show_redis_map.sh</span><br></pre></td></tr></table></figure>
+
+<p>给予show_redis_map.sh可执行权限<br>之后再将redis-cli所在目录注册到环境变量中</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd ~</span><br><span class="line">vi .bash_profile</span><br></pre></td></tr></table></figure>
+
+<p>在文件结尾处添加</p>
+<blockquote>
+<p>export PATH=$PATH:/usr/local/redis/bin</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source .bash_profile</span><br></pre></td></tr></table></figure>
+
+<p>使用户的环境变量生效。<br>最后进入到show_redis_map.sh所在目录执行</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./show_redis_map.sh 127.0.0.1:6379</span><br></pre></td></tr></table></figure>
+
+<p>即可查看Redis各节点存活情况及Redis集群master和slave的映射关系。</p>
+<img src="/2019/07/02/T20190702/redis03.JPG" title="Redis集群">
+            <div class="post-copyright">
+    <div class="content">
+        <p>最后更新： 2019年07月05日 17:25</p>
+        <p>原始链接： <a class="post-url" href="/2019/07/02/T20190702/" title="Redis集群创建">http://hellozhaoyang.github.io/2019/07/02/T20190702/</a></p>
+        <footer>
+            <a href="http://hellozhaoyang.github.io">
+                <img src="/images/logo.png" alt="ZhaoYang">
+                ZhaoYang
+            </a>
+        </footer>
+    </div>
+</div>
+
+      
+        
+            
+<div class="page-reward">
+    <a id="rewardBtn" href="javascript:;">赏</a>
+</div>
+
+<div id="reward" class="post-modal reward-lay">
+    <a class="close" href="javascript:;" id="reward-close">×</a>
+    <span class="reward-title">
+        <i class="icon icon-quote-left"></i>
+        请我吃糖~
+        <i class="icon icon-quote-right"></i>
+    </span>
+    <div class="reward-content">
+        
+        <div class="reward-code">
+            <img id="rewardCode" src="/images/wechat_code.jpg" alt="打赏二维码">
+        </div>
+        <div class="reward-select">
+            
+            <label class="reward-select-item checked" data-id="wechat" data-wechat="/images/wechat_code.jpg">
+                <img class="reward-select-item-wechat" src="/images/wechat.png" alt="微信">
+            </label>
+            
+            
+            <label class="reward-select-item" data-id="alipay" data-alipay="/images/alipay_code.jpg">
+                <img class="reward-select-item-alipay" src="/images/alipay.png" alt="支付宝">
+            </label>
+            
+        </div>
+    </div>
+</div>
+
+
+        
+    </div>
+    <footer class="article-footer">
+        
+        
+<div class="post-share">
+    <a href="javascript:;" id="share-sub" class="post-share-fab">
+        <i class="fa fa-share-alt"></i>
+    </a>
+    <div class="post-share-list" id="share-list">
+        <ul class="share-icons">
+          <li>
+            <a class="weibo share-sns" target="_blank" href="http://service.weibo.com/share/share.php?url=http://hellozhaoyang.github.io/2019/07/02/T20190702/&title=《Redis集群创建》 — ZhaoYang's Blog&pic=2019\07\02\T20190702\cover.JPG" data-title="微博">
+              <i class="fa fa-weibo"></i>
+            </a>
+          </li>
+	  <!--
+          <li>
+            <a class="weixin share-sns" id="wxFab" href="javascript:;" data-title="微信">
+              <i class="fa fa-weixin"></i>
+            </a>
+          </li>
+          <li>
+            <a class="qq share-sns" target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=http://hellozhaoyang.github.io/2019/07/02/T20190702/&title=《Redis集群创建》 — ZhaoYang's Blog&source=由于参与项目的部分功能需要，尝试在内网环境搭建了一Redis集群。安装环境为利用3台CentOS7.5服务器，服务器间可以相互通信。本文利用这3台服务器建..." data-title="QQ">
+              <i class="fa fa-qq"></i>
+            </a>
+          </li>
+	  -->
+          <li>
+            <a class="facebook share-sns" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=http://hellozhaoyang.github.io/2019/07/02/T20190702/" data-title="Facebook">
+              <i class="fa fa-facebook"></i>
+            </a>
+          </li>
+          <li>
+            <a class="twitter share-sns" target="_blank" href="https://twitter.com/intent/tweet?text=《Redis集群创建》 — ZhaoYang's Blog&url=http://hellozhaoyang.github.io/2019/07/02/T20190702/&via=http://hellozhaoyang.github.io" data-title="Twitter">
+              <i class="fa fa-twitter"></i>
+            </a>
+          </li>
+          <li>
+            <a class="google share-sns" target="_blank" href="https://plus.google.com/share?url=http://hellozhaoyang.github.io/2019/07/02/T20190702/" data-title="Google+">
+              <i class="fa fa-google-plus"></i>
+            </a>
+          </li>
+        </ul>
+     </div>
+</div>
+<div class="post-modal wx-share" id="wxShare">
+    <a class="close" href="javascript:;" id="wxShare-close">×</a>
+    <p>扫一扫，分享到微信</p>
+    <img src="//api.qrserver.com/v1/create-qr-code/?data=http://hellozhaoyang.github.io/2019/07/02/T20190702/" alt="微信分享二维码">
+</div>
+
+<div class="mask"></div>
+
+        
+        <ul class="article-footer-menu">
+            
+            
+  <li class="article-footer-tags">
+    <i class="fa fa-tags"></i>
+      
+    <a href="/tags/NoSQL/" class="color1">NoSQL</a>
+      
+    <a href="/tags/Redis/" class="color1">Redis</a>
+      
+  </li>
+
+        </ul>
+        
+    </footer>
+  </div>
+</article>
+
+
+    <aside class="post-toc-pos post-toc-top" id="post-toc">
+        <nav class="post-toc-wrap">
+            <ol class="post-toc"><li class="post-toc-item post-toc-level-1"><a class="post-toc-link" href="#1-环境准备"><span class="post-toc-text">1.环境准备</span></a><ol class="post-toc-child"><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#1-1-软件环境及版本"><span class="post-toc-text">1.1 软件环境及版本</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#1-2演示服务器IP地址"><span class="post-toc-text">1.2演示服务器IP地址</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#1-2-防火墙设置"><span class="post-toc-text">1.2 防火墙设置</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#1-3-yum本地源配置"><span class="post-toc-text">1.3 yum本地源配置</span></a></li></ol></li><li class="post-toc-item post-toc-level-1"><a class="post-toc-link" href="#2-安装单机Redis"><span class="post-toc-text">2.安装单机Redis</span></a></li><li class="post-toc-item post-toc-level-1"><a class="post-toc-link" href="#3-ruby及rubygems"><span class="post-toc-text">3.ruby及rubygems</span></a><ol class="post-toc-child"><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#3-1安装ruby"><span class="post-toc-text">3.1安装ruby</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#3-2安装rubygems及redis-gem"><span class="post-toc-text">3.2安装rubygems及redis.gem</span></a></li></ol></li><li class="post-toc-item post-toc-level-1"><a class="post-toc-link" href="#4-创建Redis集群"><span class="post-toc-text">4.创建Redis集群</span></a></li></ol>
+        </nav>
+    </aside>
+    
+
+<nav id="article-nav">
+  
+  
+    <a href="/2019/07/01/T20190701/" id="article-nav-older" class="article-nav-link-wrap">
+      <span class="article-nav-title">经济学十大原理</span>
+      <i class="fa fa-hand-o-right" aria-hidden="true"></i>
+    </a>
+  
+</nav>
+
+
+
+    
+</section>
+        
+      </div>
+      <footer id="footer">
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+<p>
+    <span id="busuanzi_container_site_uv" style='display:none'>
+        总访客数：<span id="busuanzi_value_site_uv"></span>
+    </span>
+    <span id="busuanzi_container_site_pv" style='display:none'>
+        总访问量：<span id="busuanzi_value_site_pv"></span>
+    </span>
+</p>
+
+
+      <p>
+        Powered by  <a href="http://hexo.io/" target="_blank">Hexo</a>
+        Theme <a href="//github.com/wongminho/hexo-theme-miho" target="_blank">MiHo</a>
+      &copy; 2019 ZhaoYang<br>
+      </p>
+    </div>
+  </div>
+</footer>
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script src="//cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+<script>
+  var mihoConfig = {
+      root: "http://hellozhaoyang.github.io",
+      animate: true,
+      isHome: false,
+      share: true,
+      reward: 1
+  }
+</script>
+<div class="sidebar">
+    <div id="sidebar-search" title="Search">
+        <i class="fa fa-search"></i>
+    </div>
+    <div id="sidebar-category" title="Categories">
+        <i class="fa fa-book"></i>
+    </div>
+    <div id="sidebar-tag" title="Tags">
+        <i class="fa fa-tags"></i>
+    </div>
+    <div id="sidebar-top">
+        <span class="sidebar-top-icon"><i class="fa fa-angle-up"></i></span>
+    </div>
+</div>
+<div class="sidebar-menu-box" id="sidebar-menu-box">
+    <div class="sidebar-menu-box-container">
+        <div id="sidebar-menu-box-categories">
+            <a class="category-link" href="/categories/经济学/">经济学</a><a class="category-link" href="/categories/计算机/">计算机</a>
+        </div>
+        <div id="sidebar-menu-box-tags">
+            <a href="/tags/NoSQL/" style="font-size: 10px;">NoSQL</a> <a href="/tags/Redis/" style="font-size: 10px;">Redis</a> <a href="/tags/曼昆/" style="font-size: 10px;">曼昆</a> <a href="/tags/经济学原理/" style="font-size: 10px;">经济学原理</a>
+        </div>
+    </div>
+    <a href="javascript:;" class="sidebar-menu-box-close">&times;</a>
+</div>
+<div class="mobile-header-menu-nav" id="mobile-header-menu-nav">
+    <div class="mobile-header-menu-container">
+        <span class="title">Menus</span>
+        <ul class="mobile-header-menu-navbar">
+            
+            <li>
+                <a  href="/">
+                    <i class="fa fa-home"></i><span>Home</span>
+                </a>
+            </li>
+            
+            <li>
+                <a  href="/archives">
+                    <i class="fa fa-archive"></i><span>Archives</span>
+                </a>
+            </li>
+            
+            <li>
+                <a  href="/about">
+                    <i class="fa fa-user"></i><span>About</span>
+                </a>
+            </li>
+            
+        </ul>
+    </div>
+    <div class="mobile-header-tag-container">
+        <span class="title">Tags</span>
+        <div id="mobile-header-container-tags">
+            <a href="/tags/NoSQL/" style="font-size: 10px;">NoSQL</a> <a href="/tags/Redis/" style="font-size: 10px;">Redis</a> <a href="/tags/曼昆/" style="font-size: 10px;">曼昆</a> <a href="/tags/经济学原理/" style="font-size: 10px;">经济学原理</a>
+        </div>
+    </div>
+</div>
+<div class="search-wrap">
+    <span class="search-close">&times;</span>
+        <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="back">
+            <i class="icon icon-lg icon-chevron-left"></i>
+        </a>
+        <input class="search-field" placeholder="Search..." id="keywords">
+        <a id="search-submit" href="javascript:;">
+            <i class="fa fa-search"></i>
+        </a>
+    <div class="search-container" id="search-container">
+        <ul class="search-result" id="search-result">
+        </ul>
+    </div>
+</div>
+
+<div id="search-tpl">
+    <li class="search-result-item">
+        <a href="{url}" class="search-item-li">
+            <span class="search-item-li-title" title="{title}">{title}</span>
+        </a>
+    </li>
+</div>
+<script src="/js/search.js"></script>
+<script src="/js/main.js"></script>
+
+
+  <script src="//cdn.bootcss.com/particles.js/2.0.0/particles.min.js"></script>
+  <div id="particles"></div>
+  <script src="/js/particles.js"></script>
+
+
+
+
+
+
+
+  <link rel="stylesheet" href="//cdn.bootcss.com/animate.css/3.5.0/animate.min.css">
+  <script src="//cdn.bootcss.com/scrollReveal.js/3.0.5/scrollreveal.js"></script>
+  <script src="/js/animate.js"></script>
+
+
+  <script src="/js/pop-img.js"></script>
+  <script>
+     $(".article-entry p img").popImg();
+  </script>
+
+  </div>
+</body>
+</html>
