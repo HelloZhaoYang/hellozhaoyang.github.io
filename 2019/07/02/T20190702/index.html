@@ -21,7 +21,7 @@
 <meta property="og:image" content="http://hellozhaoyang.github.io/2019/07/02/T20190702/redis01.JPG">
 <meta property="og:image" content="http://hellozhaoyang.github.io/2019/07/02/T20190702/redis02.JPG">
 <meta property="og:image" content="http://hellozhaoyang.github.io/2019/07/02/T20190702/redis03.JPG">
-<meta property="og:updated_time" content="2019-07-05T09:38:27.100Z">
+<meta property="og:updated_time" content="2019-07-05T10:15:30.132Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Redis集群创建">
 <meta name="twitter:description" content="由于参与项目的部分功能需要，尝试在内网环境搭建了一Redis集群。安装环境为利用3台CentOS7.5服务器，服务器间可以相互通信。本文利用这3台服务器建设了一6节点的Redis集群，现将创建过程做一简要记录。">
@@ -195,7 +195,7 @@
 <td align="center">172.16.100.251</td>
 </tr>
 </tbody></table>
-<h2 id="1-2-防火墙设置"><a href="#1-2-防火墙设置" class="headerlink" title="1.2 防火墙设置"></a>1.2 防火墙设置</h2><p>若部署环境允许操作系统关闭防火墙，只需在操作系统层面对每台服务器。关闭防火墙即可。shell命令为</p>
+<h2 id="1-2-防火墙设置"><a href="#1-2-防火墙设置" class="headerlink" title="1.2 防火墙设置"></a>1.2 防火墙设置</h2><p>若部署环境允许操作系统关闭防火墙，只需在操作系统层面对每台服务器关闭防火墙即可。shell命令为</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">systemctl stop firewalld.service</span><br></pre></td></tr></table></figure>
 
 <p>之后可利用shell命令检查防火墙状态</p>
@@ -288,10 +288,10 @@
 <blockquote>
 <p>daemonized yes<br>pidfile /var/run/redis_6379.pid<br>logfile “node-6379.log”<br>cluster-enabled yes<br>cluster-node-timeout 15000<br>cluster-config-file nodes-6379.conf<br>bind 1172.16.100.249 127.0.0.1</p>
 </blockquote>
-<p>更改完后按<code>wq</code>保存<br>将6379端口配置文件复制一份，作为6380端口的配置文件，并进行编辑。</p>
+<p>更改完后按<code>:wq</code>保存<br>将6379端口配置文件复制一份，作为6380端口的配置文件，并进行编辑。</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cp conf/redis-6379.conf conf/redis-6380.conf</span><br><span class="line">vi conf/redis-6380.conf</span><br></pre></td></tr></table></figure>
 
-<p>这里我们利用vi编辑器命令<code>:%s/6379/6380/g</code>将文件中所有出现6379的地方替换为6380后，输入<code>wq</code>保存退出。<br>配置文件更改好后，启动redis节点</p>
+<p>这里我们利用vi编辑器命令<code>:%s/6379/6380/g</code>将文件中所有出现6379的地方替换为6380后，输入<code>:wq</code>保存退出。<br>配置文件更改好后，启动redis节点</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">./bin/redis-server ./conf/redis-6379.conf</span><br><span class="line">./bin/redis-server ./conf/redis-6380.conf</span><br></pre></td></tr></table></figure>
 
 <p>之后我们在shell命令行中查看后台进程是运行</p>
@@ -323,7 +323,7 @@
 <img src="/2019/07/02/T20190702/redis03.JPG" title="Redis集群">
             <div class="post-copyright">
     <div class="content">
-        <p>最后更新： 2019年07月05日 17:38</p>
+        <p>最后更新： 2019年07月05日 18:15</p>
         <p>原始链接： <a class="post-url" href="/2019/07/02/T20190702/" title="Redis集群创建">http://hellozhaoyang.github.io/2019/07/02/T20190702/</a></p>
         <footer>
             <a href="http://hellozhaoyang.github.io">
