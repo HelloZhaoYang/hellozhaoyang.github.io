@@ -21,7 +21,7 @@
 <meta property="og:image" content="http://hellozhaoyang.github.io/2019/07/02/T20190702/redis01.JPG">
 <meta property="og:image" content="http://hellozhaoyang.github.io/2019/07/02/T20190702/redis02.JPG">
 <meta property="og:image" content="http://hellozhaoyang.github.io/2019/07/02/T20190702/redis03.JPG">
-<meta property="og:updated_time" content="2019-07-05T10:15:30.132Z">
+<meta property="og:updated_time" content="2020-02-19T02:42:59.723Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Redis集群创建">
 <meta name="twitter:description" content="由于参与项目的部分功能需要，尝试在内网环境搭建了一Redis集群。安装环境为利用3台CentOS7.5服务器，服务器间可以相互通信。本文利用这3台服务器建设了一6节点的Redis集群，现将创建过程做一简要记录。">
@@ -180,21 +180,10 @@
 </tr>
 </tbody></table>
 <h2 id="1-2演示服务器IP地址"><a href="#1-2演示服务器IP地址" class="headerlink" title="1.2演示服务器IP地址"></a>1.2演示服务器IP地址</h2><table>
-<thead>
-<tr>
-<th align="center">IP地址</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">172.16.100.249</td>
-</tr>
-<tr>
-<td align="center">172.16.100.250</td>
-</tr>
-<tr>
-<td align="center">172.16.100.251</td>
-</tr>
-</tbody></table>
+<tr><td colspan="3">IP地址</td></tr>
+<tr><td>172.16.100.249</td><td>172.16.100.250</td><td>172.16.100.251</td></tr>
+</table>
+
 <h2 id="1-2-防火墙设置"><a href="#1-2-防火墙设置" class="headerlink" title="1.2 防火墙设置"></a>1.2 防火墙设置</h2><p>若部署环境允许操作系统关闭防火墙，只需在操作系统层面对每台服务器关闭防火墙即可。shell命令为</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">systemctl stop firewalld.service</span><br></pre></td></tr></table></figure>
 
@@ -207,7 +196,7 @@
 <p>关闭防火墙开机自起。</p>
 <p>但是，生产环境大多不允许操作系统裸奔，需要运维人员开启操作系统防火墙。因此，我们部署Redis集群时，还需要手动开放一些端口。</p>
 <p>首先我们需要确定Redis各节点部署在哪些端口上。这里我们选择三台服务器的6379及6380端口作为我们的部署端口。<br>此外，Redis还需要部署端口数值加10000作为通信及集群管理使用。对本例而言即还需开放三台服务器的16379及16380端口。<br>综上，添加防火墙端口的shell命令为：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">firewall-cmd --zone=public --add-port=6379/tcp –permanent</span><br><span class="line">firewall-cmd --zone=public --add-port=16379/tcp --permanent</span><br><span class="line">firewall-cmd --zone=public --add-port=6380/tcp --permanent</span><br><span class="line">firewall-cmd --zone=public --add-port=16380/tcp --permanent</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">firewall-cmd --zone=public --add-port=6379/tcp –-permanent</span><br><span class="line">firewall-cmd --zone=public --add-port=16379/tcp --permanent</span><br><span class="line">firewall-cmd --zone=public --add-port=6380/tcp --permanent</span><br><span class="line">firewall-cmd --zone=public --add-port=16380/tcp --permanent</span><br></pre></td></tr></table></figure>
 
 <p>最后我们重新加载一下防火墙：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">firewall-cmd --reload</span><br></pre></td></tr></table></figure>
@@ -286,7 +275,7 @@
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vi conf/redis.conf</span><br></pre></td></tr></table></figure>
 
 <blockquote>
-<p>daemonized yes<br>pidfile /var/run/redis_6379.pid<br>logfile “node-6379.log”<br>cluster-enabled yes<br>cluster-node-timeout 15000<br>cluster-config-file nodes-6379.conf<br>bind 1172.16.100.249 127.0.0.1</p>
+<p>daemonized yes<br>pidfile /var/run/redis_6379.pid<br>logfile “node-6379.log”<br>cluster-enabled yes<br>cluster-node-timeout 15000<br>cluster-config-file nodes-6379.conf<br>bind 172.16.100.249 127.0.0.1</p>
 </blockquote>
 <p>更改完后按<code>:wq</code>保存<br>将6379端口配置文件复制一份，作为6380端口的配置文件，并进行编辑。</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cp conf/redis-6379.conf conf/redis-6380.conf</span><br><span class="line">vi conf/redis-6380.conf</span><br></pre></td></tr></table></figure>
@@ -321,9 +310,18 @@
 
 <p>即可查看Redis各节点存活情况及Redis集群master和slave的映射关系。</p>
 <img src="/2019/07/02/T20190702/redis03.JPG" title="Redis集群">
+
+<h1 id="5-为集群创建密码"><a href="#5-为集群创建密码" class="headerlink" title="5.为集群创建密码"></a>5.为集群创建密码</h1><p>由于Redis不设置密码十分危险，故在生产环境中一般要求Redis设置连接密码。<br>由于我们是搭建的Redis集群服务器，需要在每台部署服务器的每个端口均需要设置一次连接密码，这里我们以6379端口设置连接密码为123456为例，命令如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd /usr/local/redis</span><br><span class="line">./bin/redis-cli -c -p 6379</span><br></pre></td></tr></table></figure>
+
+<p>在Redis命令行中，执行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">config set masterauth 123456</span><br><span class="line">config set requirepass 123456</span><br><span class="line">config rewrite</span><br></pre></td></tr></table></figure>
+
+<p>在其它各连接节点都需要重复执行这一操作，注意各个节点的密码都必须一致，否则Redirected就会失败。</p>
+
             <div class="post-copyright">
     <div class="content">
-        <p>最后更新： 2019年07月05日 18:15</p>
+        <p>最后更新： 2020年02月19日 10:42</p>
         <p>原始链接： <a class="post-url" href="/2019/07/02/T20190702/" title="Redis集群创建">http://hellozhaoyang.github.io/2019/07/02/T20190702/</a></p>
         <footer>
             <a href="http://hellozhaoyang.github.io">
@@ -445,7 +443,7 @@
 
     <aside class="post-toc-pos post-toc-top" id="post-toc">
         <nav class="post-toc-wrap">
-            <ol class="post-toc"><li class="post-toc-item post-toc-level-1"><a class="post-toc-link" href="#1-环境准备"><span class="post-toc-text">1.环境准备</span></a><ol class="post-toc-child"><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#1-1-软件环境及版本"><span class="post-toc-text">1.1 软件环境及版本</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#1-2演示服务器IP地址"><span class="post-toc-text">1.2演示服务器IP地址</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#1-2-防火墙设置"><span class="post-toc-text">1.2 防火墙设置</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#1-3-yum本地源配置"><span class="post-toc-text">1.3 yum本地源配置</span></a></li></ol></li><li class="post-toc-item post-toc-level-1"><a class="post-toc-link" href="#2-安装单机Redis"><span class="post-toc-text">2.安装单机Redis</span></a></li><li class="post-toc-item post-toc-level-1"><a class="post-toc-link" href="#3-ruby及rubygems"><span class="post-toc-text">3.ruby及rubygems</span></a><ol class="post-toc-child"><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#3-1安装ruby"><span class="post-toc-text">3.1安装ruby</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#3-2安装rubygems及redis-gem"><span class="post-toc-text">3.2安装rubygems及redis.gem</span></a></li></ol></li><li class="post-toc-item post-toc-level-1"><a class="post-toc-link" href="#4-创建Redis集群"><span class="post-toc-text">4.创建Redis集群</span></a></li></ol>
+            <ol class="post-toc"><li class="post-toc-item post-toc-level-1"><a class="post-toc-link" href="#1-环境准备"><span class="post-toc-text">1.环境准备</span></a><ol class="post-toc-child"><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#1-1-软件环境及版本"><span class="post-toc-text">1.1 软件环境及版本</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#1-2演示服务器IP地址"><span class="post-toc-text">1.2演示服务器IP地址</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#1-2-防火墙设置"><span class="post-toc-text">1.2 防火墙设置</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#1-3-yum本地源配置"><span class="post-toc-text">1.3 yum本地源配置</span></a></li></ol></li><li class="post-toc-item post-toc-level-1"><a class="post-toc-link" href="#2-安装单机Redis"><span class="post-toc-text">2.安装单机Redis</span></a></li><li class="post-toc-item post-toc-level-1"><a class="post-toc-link" href="#3-ruby及rubygems"><span class="post-toc-text">3.ruby及rubygems</span></a><ol class="post-toc-child"><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#3-1安装ruby"><span class="post-toc-text">3.1安装ruby</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#3-2安装rubygems及redis-gem"><span class="post-toc-text">3.2安装rubygems及redis.gem</span></a></li></ol></li><li class="post-toc-item post-toc-level-1"><a class="post-toc-link" href="#4-创建Redis集群"><span class="post-toc-text">4.创建Redis集群</span></a></li><li class="post-toc-item post-toc-level-1"><a class="post-toc-link" href="#5-为集群创建密码"><span class="post-toc-text">5.为集群创建密码</span></a></li></ol>
         </nav>
     </aside>
     
@@ -483,7 +481,7 @@
       <p>
         Powered by  <a href="http://hexo.io/" target="_blank">Hexo</a>
         Theme <a href="//github.com/wongminho/hexo-theme-miho" target="_blank">MiHo</a>
-      &copy; 2019 ZhaoYang<br>
+      &copy; 2020 ZhaoYang<br>
       </p>
     </div>
   </div>
